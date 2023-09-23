@@ -20,14 +20,14 @@ router.post("/", async (req, res, next) => {
     const user = await userModel.findByEmail({ email });
 
     if (!user) {
-      throw { message: "Please enter valid credentials", status: 401 };
+      throw { msg: "Please enter valid credentials", status: 401 };
     }
 
     // Compare the provided password with the stored hashed password
     const passwordMatch = await bcrypt.compare(password, user.password);
 
     if (!passwordMatch) {
-      throw { message: "Please enter valid credentials", status: 401 };
+      throw { msg: "Please enter valid credentials", status: 401 };
     }
 
     // Generate a JWT token

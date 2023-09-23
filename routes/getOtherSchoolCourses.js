@@ -6,10 +6,10 @@ const router = express.Router();
 
 router.post("/", verifyToken, async (req, res, next) => {
   try {
-    const { school } = req.body;
-    query_data = await getOtherSchoolCourses(school);
+    const { schools } = req.body;
+    query_data = await getOtherSchoolCourses(schools);
 
-    res.status(200).json(query_data?.result);
+    res.status(200).json(query_data);
   } catch (error) {
     console.error("Couldn't find courses for the selected school:", error);
     next(error);

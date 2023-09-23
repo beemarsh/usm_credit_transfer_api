@@ -18,29 +18,53 @@ function validatePassword(password) {
   // Use regular expressions to check for at least one letter and one number
   const letterPattern = /[a-zA-Z]/;
   const numberPattern = /[0-9]/;
-
   return letterPattern.test(password) && numberPattern.test(password);
 }
 
-function validateRole(role) {
-  const allowedRoles = ["ADV", "STD", "ADM"];
-  return allowedRoles.includes(role);
+function validateName(f_name) {
+  const pattern = /^[A-Za-z]+$/;
+  return pattern.test(f_name) && f_name?.length >= 2;
 }
 
-function validateDepartment(department) {
-  const allowedDepartments = ["SOC", "DOP"];
-  return allowedDepartments.includes(department);
+function isUsmIDValid(id) {
+  const pattern = /^\d{8}$/;
+  return pattern.test(id);
 }
 
-function validateName(name) {
-  return name.length >= 2;
+function isValidPhoneNumber(phoneNumber) {
+  // Define a regular expression pattern for a U.S. phone number
+  const pattern = /^\d{10}$/; // Matches exactly 10 digits
+
+  // Use the test() method to check if the phoneNumber matches the pattern
+  return pattern.test(phoneNumber);
+}
+
+const { countries } = require("../utils/conf");
+function isValidCountry(country_code) {
+  const matchingCountry = countries.find(({ code }) => code === country_code);
+
+  if (!matchingCountry) return false;
+  else return true;
+}
+
+function isValidISODate(dateString) {
+  // Attempt to parse the input string as a date
+  const date = new Date(dateString);
+
+  // Check if the parsed date is not 'Invalid Date'
+  // and the input string matches the date string (to prevent partial matches)
+  return (
+    date.toString() !== "Invalid Date" && date.toISOString() === dateString
+  );
 }
 
 module.exports = {
   validateEmail,
   validateUsername,
   validatePassword,
-  validateRole,
-  validateDepartment,
   validateName,
+  isUsmIDValid,
+  isValidPhoneNumber,
+  isValidCountry,
+  isValidISODate,
 };

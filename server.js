@@ -46,9 +46,8 @@ app.use(cors(corsOptions));
 const apiRoutes = require("./routes/index");
 app.use("/", apiRoutes);
 
-// Middleware to handle JSON parsing errors
+// Middleware to handle errors
 app.use((error, req, res, next) => {
-  console.log(error);
   if (error?.message?.includes("violates check constraint")) {
     // Handle constraint violation
     return res
@@ -60,11 +59,10 @@ app.use((error, req, res, next) => {
       .json({ message: "Please format your data" });
   } else {
     res.status(error?.status ? error?.status : 403).json({
-      message: error?.message
-        ? error?.message
-        : "Sorry! Couldn't process your request",
+      message: error?.msg ? error?.msg : "Sorry! Couldn't process your request",
     });
   }
+  console.log(error);
 });
 
 // Catch-all route handler for undefined routes
