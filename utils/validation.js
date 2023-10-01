@@ -9,6 +9,12 @@ function validateEmail(email) {
   return emailRegex.test(email);
 }
 
+function validateRole(role) {
+  //1 is admin, 0 is organizer
+  if (role === 1 || role === 0) return true;
+  else return false;
+}
+
 function validatePassword(password) {
   // Check if the password is at least 6 characters long
   if (password.length < 6) {
@@ -22,8 +28,23 @@ function validatePassword(password) {
 }
 
 function validateName(f_name) {
-  const pattern = /^[A-Za-z]+$/;
+  const pattern = /^[A-Za-z\s]+$/;
   return pattern.test(f_name) && f_name?.length >= 2;
+}
+
+function validateSchoolCode(code) {
+  const pattern = /^[A-Za-z]+$/;
+  return pattern.test(code) && code?.length >= 3;
+}
+
+function validateCourseName(name) {
+  const pattern = /^[\w\s]+$/;
+  return pattern.test(name) && name?.length >= 2;
+}
+
+function validateCourseId(id) {
+  const pattern = /^[A-Za-z0-9]+$/;
+  return pattern.test(id) && id?.length >= 3;
 }
 
 function isUsmIDValid(id) {
@@ -67,4 +88,8 @@ module.exports = {
   isValidPhoneNumber,
   isValidCountry,
   isValidISODate,
+  validateRole,
+  validateSchoolCode,
+  validateCourseId,
+  validateCourseName,
 };

@@ -6,14 +6,20 @@ const router = express.Router();
 
 router.post("/", verifyToken, async (req, res, next) => {
   try {
-    user_data = getUserFormattedData(
-      await getUserData({
-        username: req.user.username,
-        id: req.user.userId,
-      })
-    );
+    let unformatted_user_data = await getUserData({
+      id: req?.user?.userId,
+    });
 
-    res.json({ message: "Login Successful", user: user_data });
+    if (!unformatted_user_data?.is_active) {
+      throw {
+        msg: "Your account has been disabled! Please contact the administrator",
+        status: 401,
+      };
+    }
+
+    let formatted_user_data = getUserFormattedData(unformatted_user_data);
+
+    res.json({ message: "Login Successful", user: formatted_user_data });
   } catch (error) {
     console.error("Error refreshing token:", error);
     next(error);
@@ -21,14 +27,11 @@ router.post("/", verifyToken, async (req, res, next) => {
 });
 
 const keysToCopy = [
-  "username",
   "profile_picture",
   "role",
   "department",
   "first_name",
   "last_name",
-  "is_staff",
-  "is_admin",
 ];
 const getUserFormattedData = (user) => {
   try {

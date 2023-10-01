@@ -8,13 +8,9 @@ const ACCESS_MAX_AGE = parseInt(process.env.ACCESS_MAX_AGE);
 
 // Function to generate a new access token
 const generateAccessToken = (user) => {
-  return jwt.sign(
-    { userId: user.id, username: user.username },
-    process.env.SECRET_KEY,
-    {
-      expiresIn: "15m", // Set the new access token expiration time as needed
-    }
-  );
+  return jwt.sign({ userId: user.id }, process.env.SECRET_KEY, {
+    expiresIn: "15m", // Set the new access token expiration time as needed
+  });
 };
 
 const verifyAccessTokenAndRefresh = (req, res, next) => {

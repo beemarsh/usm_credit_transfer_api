@@ -25,10 +25,9 @@ router.post(
       let s3Url = "";
       if (uploadedFile) {
         // Specify the S3 bucket name
+        const fileExtension = uploadedFile.originalname.split(".").pop();
         const bucketName = process.env.AWS_S3_BUCKET;
-        const fileName = `student_pic/${Date.now()}_${
-          uploadedFile.originalname
-        }`;
+        const fileName = `student_pic/${req.user.userId}.${fileExtension}`;
 
         const params = {
           Bucket: bucketName,
@@ -65,13 +64,7 @@ router.post(
       // Send a response to the client after successful upload
       res.status(200).json({ message: "Success" });
     } catch (error) {
-      let err_msg = getDBErrMsg(error);
-
-      next({
-        msg: err_msg
-          ? err_msg
-          : "Couldn't process your request! Please provide correct data.",
-      });
+      next(error);
     }
   }
 );

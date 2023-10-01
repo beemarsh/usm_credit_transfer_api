@@ -3,117 +3,105 @@ const bcrypt = require("bcrypt");
 
 const {
   validateEmail,
-  validateUsername,
-  validateDepartment,
   validateName,
   validatePassword,
   validateRole,
 } = require("../utils/validation");
 
 async function createUser({
-  username,
   email,
   password,
-  profile_picture,
-  role,
+  is_admin,
   department,
   first_name,
   last_name,
-  is_staff = false,
+  created_by,
 }) {
-  if (!validateUsername(username)) {
-    throw { message: "Invalid username" };
-  }
-
   if (!validateEmail(email)) {
-    throw { message: "Invalid email address" };
+    throw { msg: "Invalid email address", status: 400 };
   }
 
   if (!validatePassword(password)) {
     throw {
-      message:
-        "Password should be at least six characters and have at least one number",
+      msg: "Password should be at least six characters and have at least one number",
+      status: 400,
     };
   }
-  if (!validateRole(role)) {
-    throw { message: "Unrecognized role selected" };
-  }
 
-  if (!validateDepartment(department)) {
-    throw { message: "Unrecognized department selected" };
+  if (!validateRole(is_admin)) {
+    throw { msg: "Unrecognized role selected", status: 400 };
   }
 
   if (!validateName(first_name)) {
-    throw { message: "Please enter a valid first name" };
+    throw { msg: "Please enter a valid first name", status: 400 };
   }
 
   if (!validateName(last_name)) {
-    throw { message: "Please enter a valid last name" };
+    throw { msg: "Please enter a valid last name", status: 400 };
   }
 
   const hashedPassword = await bcrypt.hash(password, 10);
-  return db.one(
-    "INSERT INTO users (username, email, password, profile_picture, role, department, first_name, last_name, is_staff) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *",
+  return await db.query(
+    "INSERT INTO users (first_name, last_name, email, password, is_admin, department, created_by) VALUES ($1, $2, $3, $4, $5, $6, $7)",
     [
-      username,
-      email,
-      hashedPassword,
-      profile_picture,
-      role,
-      department,
       first_name,
       last_name,
-      is_staff,
+      email,
+      hashedPassword,
+      !!is_admin,
+      department,
+      created_by,
     ]
   );
 }
 
 async function findByEmail({ email }) {
   if (!validateEmail(email)) {
-    throw { message: "Invalid email address" };
+    throw { msg: "Invalid email address", status: 400 };
   }
 
   return await db.oneOrNone("SELECT * FROM users WHERE email = $1", email);
 }
-
-async function findByUsername({ username }) {
-  if (!validateUsername(username)) {
-    throw { message: "Invalid username" };
-  }
-
-  return await db.oneOrNone(
-    "SELECT * FROM users WHERE username = $1",
-    username
-  );
+async function findByID({ id }) {
+  return await db.oneOrNone("SELECT * FROM users WHERE id = $1", id);
 }
 
-async function findByUsernameOrEmail({ username, email }) {
-  if (!validateUsername(username) || !validateEmail(email)) {
-    throw { error: "Please enter valid credentials" };
-  }
-  return await db.oneOrNone(
-    "SELECT * FROM users WHERE username = $1 OR email = $2",
-    [username, email]
-  );
+async function getUserData({ id }) {
+  retrieved_data = await db.oneOrNone("SELECT * FROM users WHERE id = $1", [
+    id,
+  ]);
+
+  return retrieved_data;
 }
 
-async function getUserData({ username, id }) {
-  if (!validateUsername(username)) {
-    throw { error: "Please enter valid credentials" };
-  }
-
-  retrieved_data = await db.oneOrNone(
-    "SELECT * FROM users WHERE username = $1 AND id = $2",
-    [username, id]
+async function findUsersWithFilter({ email, name, department }) {
+  retrieved_data = await db.manyOrNone(`
+  SELECT first_name,
+  last_name,
+  email,
+  department,
+  CASE WHEN u.is_admin THEN 1 ELSE 0 END AS role,
+  (SELECT CONCAT(first_name, ' ', last_name) FROM users WHERE id = u.created_by) AS created_by
+  FROM users u
+WHERE
+  (department IS NULL OR department LIKE '%${department}%')
+  AND
+  (email IS NULL OR email ILIKE '%${email}%')
+  AND
+  (
+    '' IS NULL
+    OR
+    (first_name || ' ' || last_name) ILIKE '%${name}%'
   );
+  `);
 
   return retrieved_data;
 }
 
 module.exports = {
   createUser,
-  findByUsername,
   findByEmail,
-  findByUsernameOrEmail,
   getUserData,
+  findByID,
+  findUsersWithFilter,
 };

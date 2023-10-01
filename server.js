@@ -44,6 +44,7 @@ app.use(cors(corsOptions));
 
 // Routes
 const apiRoutes = require("./routes/index");
+const getDBErrMsg = require("./models/dbError");
 app.use("/", apiRoutes);
 
 // Middleware to handle errors
@@ -51,15 +52,16 @@ app.use((error, req, res, next) => {
   if (error?.message?.includes("violates check constraint")) {
     // Handle constraint violation
     return res
-      .status(error?.status ? error?.status : 403)
+      .status(error?.status ? error?.status : 400)
       .json({ message: "Please enter valid data" });
   } else if (error instanceof SyntaxError && "body" in error) {
     res
-      .status(error?.status ? error.status : 401)
+      .status(error?.status ? error.status : 400)
       .json({ message: "Please format your data" });
   } else {
-    res.status(error?.status ? error?.status : 403).json({
-      message: error?.msg ? error?.msg : "Sorry! Couldn't process your request",
+    const db_err = getDBErrMsg(error);
+    res.status(error?.status ? error?.status : 400).json({
+      message: db_err ? db_err : "Sorry! Couldn't process your request",
     });
   }
   console.log(error);

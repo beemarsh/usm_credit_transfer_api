@@ -23,6 +23,13 @@ router.post("/", async (req, res, next) => {
       throw { msg: "Please enter valid credentials", status: 401 };
     }
 
+    if (!user?.is_active) {
+      throw {
+        msg: "Your account has been disabled! Please contact the administrator",
+        status: 401,
+      };
+    }
+
     // Compare the provided password with the stored hashed password
     const passwordMatch = await bcrypt.compare(password, user.password);
 
@@ -31,14 +38,12 @@ router.post("/", async (req, res, next) => {
     }
 
     // Generate a JWT token
-    const accessToken = jwt.sign(
-      { userId: user.id, username: user.username },
-      process.env.SECRET_KEY,
-      { expiresIn: "15m" }
-    );
+    const accessToken = jwt.sign({ userId: user.id }, process.env.SECRET_KEY, {
+      expiresIn: "15m",
+    });
 
     const refreshToken = jwt.sign(
-      { userId: user.id, username: user.username },
+      { userId: user.id },
       process.env.REFRESH_SECRET_KEY,
       { expiresIn: "7d" } // Refresh token expiration time
     );
@@ -63,7 +68,6 @@ router.post("/", async (req, res, next) => {
     // Send the token in the HTTP response
     res.status(200).json({ message: "Login Successful" });
   } catch (error) {
-    console.error("Error logging in user:", error);
     next(error);
   }
 });
