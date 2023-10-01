@@ -22,6 +22,12 @@ function getDBErrMsg(error) {
       "The selected USM equivalent USM course is invalid or doesn't exist.";
   if (error?.message?.includes("fk_school_code"))
     err_msg = "The provided school is invalid or doesn't exist.";
+  if (error?.message?.includes("usm_departments_pkey"))
+    err_msg = "The provided department already exists.";
+  if (error?.message?.includes("usm_majors_department_fkey"))
+    err_msg = "The provided department doesnt exist.";
+  if (error?.message?.includes("usm_courses_associated_department_fkey"))
+    err_msg = "The provided department doesnt exist.";
   if (error?.message?.includes("syntax"))
     err_msg = "The request you provided is invalid. Please provide correct data format.";
 

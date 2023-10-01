@@ -11,6 +11,12 @@ const addSchool = require("./addSchool");
 const getSchools = require("./getSchools");
 const addOtherCourse = require("./addOtherCourse");
 const getOtherCourses = require("./getOtherCourses");
+const addDepartment = require("./addDepartment");
+const getDepartments = require("./getDepartments");
+const addMajor = require("./addMajor");
+const getMajors = require("./getMajors");
+const addUSMCourse = require("./addUSMCourse");
+const getUSMCourses = require("./getUSMCourses");
 
 const router = express.Router();
 
@@ -26,5 +32,11 @@ router.use("/add_school", addSchool);
 router.use("/get_schools", getSchools);
 router.use("/add_other_course", addOtherCourse);
 router.use("/get_other_courses", getOtherCourses);
+router.use("/add_department", addDepartment);
+router.use("/get_departments", getDepartments);
+router.use("/add_major", addMajor);
+router.use("/get_majors", getMajors);
+router.use("/add_usm_course", addUSMCourse);
+router.use("/get_usm_courses", getUSMCourses);
 
 module.exports = router;

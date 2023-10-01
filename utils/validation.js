@@ -79,6 +79,12 @@ function isValidISODate(dateString) {
   );
 }
 
+function validateHours(hour) {
+  let regex = /^[0-9]+$/;
+  if (!regex.test(hour)) return false;
+  return true;
+}
+
 module.exports = {
   validateEmail,
   validateUsername,
@@ -92,4 +98,5 @@ module.exports = {
   validateSchoolCode,
   validateCourseId,
   validateCourseName,
+  validateHours,
 };
