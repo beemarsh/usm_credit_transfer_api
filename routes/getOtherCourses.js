@@ -8,13 +8,10 @@ const router = express.Router();
 // Register route
 router.post("/", verifyToken, verifyIfUserAdmin, async (req, res, next) => {
   try {
-    const { course_id, school, name, usm_eqv } = req.body;
+    const { q } = req.body;
 
     let retrieved = await findOtherCoursesWithFilter({
-      course_id,
-      school,
-      name,
-      usm_eqv,
+      q
     });
 
     res.status(201).json(retrieved);

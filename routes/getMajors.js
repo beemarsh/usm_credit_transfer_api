@@ -11,12 +11,10 @@ const router = express.Router();
 // Register route
 router.post("/", verifyToken, verifyIfUserAdmin, async (req, res, next) => {
   try {
-    const { major_code, major_name, department } = req.body;
+    const { q } = req.body;
 
     let retrieved = await findMajorsWithFilter({
-      department,
-      major_code,
-      major_name,
+      q,
     });
 
     res.status(201).json(retrieved);

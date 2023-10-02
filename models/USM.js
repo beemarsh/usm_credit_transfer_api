@@ -19,15 +19,15 @@ async function addDepartment({ department_code, department_name }) {
   );
 }
 
-async function findDepartmentsWithFilter({ department_name, department_code }) {
+async function findDepartmentsWithFilter({ q }) {
   retrieved_data = await db.manyOrNone(`
     SELECT department_code,
     department_name
     FROM usm_departments
   WHERE
-    (department_code IS NULL OR department_code LIKE '%${department_code}%')
-    AND
-    (department_name IS NULL OR department_name ILIKE '%${department_name}%');
+    (department_code ILIKE '%${q}%')
+    OR
+    (department_name ILIKE '%${q}%');
     `);
 
   return retrieved_data;
@@ -50,7 +50,7 @@ async function addMajor({ major_code, major_name, department }) {
   );
 }
 
-async function findMajorsWithFilter({ major_code, major_name, department }) {
+async function findMajorsWithFilter({ q }) {
   retrieved_data = await db.manyOrNone(`
     SELECT major_code,
     major_name,
@@ -58,11 +58,11 @@ async function findMajorsWithFilter({ major_code, major_name, department }) {
     (SELECT department_name from usm_departments where department_code = um.department) as department_name
     FROM usm_majors um
   WHERE
-    (major_code IS NULL OR major_code LIKE '%${major_code}%')
-    AND
-    (major_name IS NULL OR major_name ILIKE '%${major_name}%')
-    AND
-    (department IS NULL OR department LIKE '%${department}%');
+    (major_code ILIKE '%${q}%')
+    OR
+    (major_name ILIKE '%${q}%')
+    OR
+    (department ILIKE '%${q}%');
     `);
 
   return retrieved_data;
@@ -93,11 +93,7 @@ async function addUSMCourse({
   );
 }
 
-async function findUSMCoursesWithFilter({
-  department,
-  course_id,
-  course_name,
-}) {
+async function findUSMCoursesWithFilter({ q }) {
   retrieved_data = await db.manyOrNone(`
     SELECT associated_department as department_code,
     course_id,
@@ -106,11 +102,11 @@ async function findUSMCoursesWithFilter({
     (SELECT department_name from usm_departments where department_code = uc.associated_department) as department_name
     FROM usm_courses uc
   WHERE
-    (associated_department IS NULL OR associated_department LIKE '%${department}%')
-    AND
-    (course_id IS NULL OR course_id LIKE '%${course_id}%')
-    AND
-    (course_name IS NULL OR course_name ILIKE '%${course_name}%');
+    (associated_department ILIKE '%${q}%')
+    OR
+    (course_id ILIKE '%${q}%')
+    OR
+    (course_name ILIKE '%${q}%');
     `);
 
   return retrieved_data;

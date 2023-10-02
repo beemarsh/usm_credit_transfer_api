@@ -8,12 +8,10 @@ const router = express.Router();
 // Register route
 router.post("/", verifyToken, verifyIfUserAdmin, async (req, res, next) => {
   try {
-    const { email, name, department } = req.body;
+    const { q } = req.body;
 
     let retrieved = await findUsersWithFilter({
-      email,
-      name,
-      department,
+      q,
     });
 
     res.status(201).json(retrieved);

@@ -74,7 +74,7 @@ async function getUserData({ id }) {
   return retrieved_data;
 }
 
-async function findUsersWithFilter({ email, name, department }) {
+async function findUsersWithFilter({ q }) {
   retrieved_data = await db.manyOrNone(`
   SELECT first_name,
   last_name,
@@ -84,14 +84,12 @@ async function findUsersWithFilter({ email, name, department }) {
   (SELECT CONCAT(first_name, ' ', last_name) FROM users WHERE id = u.created_by) AS created_by
   FROM users u
 WHERE
-  (department IS NULL OR department LIKE '%${department}%')
-  AND
-  (email IS NULL OR email ILIKE '%${email}%')
-  AND
+  (department LIKE '%${q}%')
+  OR
+  (email ILIKE '%${q}%')
+  OR
   (
-    '' IS NULL
-    OR
-    (first_name || ' ' || last_name) ILIKE '%${name}%'
+    (first_name || ' ' || last_name) ILIKE '%${q}%'
   );
   `);
 

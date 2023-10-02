@@ -8,11 +8,10 @@ const router = express.Router();
 // Register route
 router.post("/", verifyToken, verifyIfUserAdmin, async (req, res, next) => {
   try {
-    const { department_name, department_code } = req.body;
+    const { q } = req.body;
 
     let retrieved = await findDepartmentsWithFilter({
-      department_code,
-      department_name,
+      q,
     });
 
     res.status(201).json(retrieved);

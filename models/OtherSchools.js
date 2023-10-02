@@ -160,18 +160,17 @@ async function addSchool({ name, code, address }) {
     [name, code, address]
   );
 }
-async function findSchoolsWithFilter({ name, code }) {
+async function findSchoolsWithFilter({ q }) {
   retrieved_data = await db.manyOrNone(`
   SELECT name,
   code,
   address
   FROM verified_schools
 WHERE
-  (code IS NULL OR code LIKE '%${code}%')
-  AND
-  (name IS NULL OR name ILIKE '%${name}%');
+  (code ILIKE '%${q}%')
+  OR
+  (name ILIKE '%${q}%');
   `);
-
   return retrieved_data;
 }
 
@@ -194,12 +193,7 @@ async function addOtherSchoolCourses({
     [course_id, school, name, usm_eqv, credit_hours]
   );
 }
-async function findOtherCoursesWithFilter({
-  course_id,
-  school,
-  name,
-  usm_eqv,
-}) {
+async function findOtherCoursesWithFilter({ q }) {
   retrieved_data = await db.manyOrNone(`
   SELECT
   course_id,
@@ -211,13 +205,13 @@ async function findOtherCoursesWithFilter({
   (SELECT name FROM verified_schools WHERE code = oc.school) AS school_name
   FROM other_school_courses oc
 WHERE
-  (course_id IS NULL OR course_id LIKE '%${course_id}%')
-  AND
-  (school IS NULL OR school LIKE '%${school}%')
-  AND
-  (name IS NULL OR name LIKE '%${name}%')
-  AND
-  (usm_eqv IS NULL OR usm_eqv LIKE '%${usm_eqv}%');
+  (course_id ILIKE '%${q}%')
+  OR
+  (school ILIKE '%${q}%')
+  OR
+  (name ILIKE '%${q}%')
+  OR
+  (usm_eqv ILIKE '%${q}%');
   `);
 
   return retrieved_data;
