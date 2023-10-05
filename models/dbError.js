@@ -28,6 +28,8 @@ function getDBErrMsg(error) {
     err_msg = "The provided department doesnt exist.";
   if (error?.message?.includes("usm_courses_associated_department_fkey"))
     err_msg = "The provided department doesnt exist.";
+  if (error?.message?.includes("users_email_key"))
+    err_msg = "User already exists.";
   if (error?.message?.includes("syntax"))
     err_msg = "The request you provided is invalid. Please provide correct data format.";
 

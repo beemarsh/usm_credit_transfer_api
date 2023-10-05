@@ -55,6 +55,46 @@ async function createUser({
   );
 }
 
+async function updateUser({ email, role, department, first_name, last_name }) {
+  if (!validateEmail(email)) {
+    throw { msg: "Invalid email address", status: 400 };
+  }
+
+  if (!validateRole(role)) {
+    throw { msg: "Unrecognized role selected", status: 400 };
+  }
+
+  if (!validateName(first_name)) {
+    throw { msg: "Please enter a valid first name", status: 400 };
+  }
+
+  if (!validateName(last_name)) {
+    throw { msg: "Please enter a valid last name", status: 400 };
+  }
+
+  return await db.query(
+    "UPDATE users set first_name=$1, last_name=$2, is_admin=$3, department=$4 WHERE email=$5",
+    [first_name, last_name, !!role, department, email]
+  );
+}
+
+async function changeUserActive({ email }) {
+  if (!validateEmail(email)) {
+    throw { msg: "Invalid email address", status: 400 };
+  }
+
+  return await db.query(
+    "UPDATE users set is_active= CASE WHEN is_active=true THEN false ELSE true END WHERE email=$1",
+    [email]
+  );
+}
+async function deleteUser({ email }) {
+  if (!validateEmail(email)) {
+    throw { msg: "Invalid email address", status: 400 };
+  }
+  return await db.query("DELETE from users WHERE email=$1", [email]);
+}
+
 async function findByEmail({ email }) {
   if (!validateEmail(email)) {
     throw { msg: "Invalid email address", status: 400 };
@@ -74,23 +114,40 @@ async function getUserData({ id }) {
   return retrieved_data;
 }
 
-async function findUsersWithFilter({ q }) {
-  retrieved_data = await db.manyOrNone(`
-  SELECT first_name,
-  last_name,
-  email,
-  department,
-  CASE WHEN u.is_admin THEN 1 ELSE 0 END AS role,
-  (SELECT CONCAT(first_name, ' ', last_name) FROM users WHERE id = u.created_by) AS created_by
-  FROM users u
-WHERE
-  (department LIKE '%${q}%')
-  OR
-  (email ILIKE '%${q}%')
-  OR
+async function findUsersWithFilter({ q, page }) {
+  const per_page = 2;
+  const searchQuery = `
+  WHERE
   (
-    (first_name || ' ' || last_name) ILIKE '%${q}%'
-  );
+    (department LIKE '%${q}%')
+    OR
+    (email ILIKE '%${q}%')
+    OR
+    (
+      (first_name || ' ' || last_name) ILIKE '%${q}%'
+    )
+    )
+    AND
+    is_super = false
+    `;
+  retrieved_data = await db.oneOrNone(`
+  WITH user_data AS
+  (
+  SELECT first_name,
+    last_name,
+    email,
+    department,
+    is_active,
+    CASE WHEN u.is_admin THEN 1 ELSE 0 END AS role,
+    (SELECT CONCAT(first_name, ' ', last_name) FROM users WHERE id = u.created_by) AS created_by,
+    (SELECT department_name FROM usm_departments WHERE department_code = u.department) AS department_name
+    FROM users u
+  ${searchQuery}
+  LIMIT ${per_page} OFFSET ${(page - 1) * per_page}
+  )
+  SELECT COALESCE((SELECT json_agg(u.* )), '[]')  AS data, CEIL(CEIL(COUNT(*) / ${per_page}) + CEIL(COUNT(*) % ${per_page})) AS total, (SELECT CEIL(COUNT(*)) FROM users ${searchQuery}) AS total_rows FROM user_data AS u
+  
+  ;
   `);
 
   return retrieved_data;
@@ -102,4 +159,7 @@ module.exports = {
   getUserData,
   findByID,
   findUsersWithFilter,
+  updateUser,
+  changeUserActive,
+  deleteUser,
 };

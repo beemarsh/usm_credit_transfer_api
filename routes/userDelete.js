@@ -1,21 +1,20 @@
 const express = require("express");
-const { findUsersWithFilter } = require("../models/User");
+const userModel = require("../models/User");
 const verifyToken = require("../utils/verifyToken");
 const verifyIfUserAdmin = require("../utils/verifyAdmin");
 
 const router = express.Router();
 
 // Register route
-router.post("/", verifyToken, verifyIfUserAdmin, async (req, res, next) => {
+router.delete("/", verifyToken, verifyIfUserAdmin, async (req, res, next) => {
   try {
-    const { q,page=1 } = req.body;
+    const { email } = req.body;
 
-    let retrieved = await findUsersWithFilter({
-      q,
-      page
+    await userModel.deleteUser({
+      email,
     });
 
-    res.status(201).json(retrieved);
+    res.status(201).json({ message: "User deleted successfully" });
   } catch (error) {
     next(error);
   }
