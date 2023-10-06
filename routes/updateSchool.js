@@ -1,21 +1,23 @@
 const express = require("express");
 const verifyToken = require("../utils/verifyToken");
 const verifyIfUserAdmin = require("../utils/verifyAdmin");
-const { findDepartmentsWithFilter } = require("../models/USM");
+const { updateSchool } = require("../models/OtherSchools");
 
 const router = express.Router();
 
 // Register route
 router.post("/", verifyToken, verifyIfUserAdmin, async (req, res, next) => {
   try {
-    const { q, page } = req.body;
+    const { pre_code, code, name, address } = req.body;
 
-    let retrieved = await findDepartmentsWithFilter({
-      q,
-      page,
+    await updateSchool({
+      pre_code,
+      code,
+      name,
+      address,
     });
 
-    res.status(201).json(retrieved);
+    res.status(201).json({ message: "School updated successfully" });
   } catch (error) {
     next(error);
   }

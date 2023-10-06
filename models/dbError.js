@@ -10,7 +10,8 @@ function getDBErrMsg(error) {
   if (error?.message?.includes("course_id"))
     err_msg = "The provided course doesn't exist or is invalid.";
   if (error?.message?.includes("users_department_fkey"))
-    err_msg = "Please enter a valid department.";
+    err_msg =
+      "Please enter a valid department or the deparment is already linked.";
   if (error?.message?.includes("users_email_key"))
     err_msg = "User already exists.";
   if (error?.message?.includes("unique_school_code"))
@@ -28,10 +29,19 @@ function getDBErrMsg(error) {
     err_msg = "The provided department doesnt exist.";
   if (error?.message?.includes("usm_courses_associated_department_fkey"))
     err_msg = "The provided department doesnt exist.";
+  if (error?.message?.includes("student_course_relation"))
+    err_msg =
+      "The provided school code cannot be updated because the school is linked with students.";
   if (error?.message?.includes("users_email_key"))
     err_msg = "User already exists.";
+  if (
+    error?.detail?.includes("still referenced") &&
+    error?.detail?.includes("other_school_courses")
+  )
+    err_msg = "Cannot delete. The Course ID is connected to other data.";
   if (error?.message?.includes("syntax"))
-    err_msg = "The request you provided is invalid. Please provide correct data format.";
+    err_msg =
+      "The request you provided is invalid. Please provide correct data format.";
 
   return err_msg;
 }

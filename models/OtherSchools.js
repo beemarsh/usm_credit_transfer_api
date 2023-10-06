@@ -1,4 +1,5 @@
 const db = require("../db-config");
+const { ROWS_PER_PAGE } = require("../utils/conf");
 const {
   validateName,
   validateSchoolCode,
@@ -13,7 +14,6 @@ async function getInitialPropsToAddStudent() {
           jsonb_build_object(
               'major_code', majors.major_code,
               'major_name', majors.major_name,
-              'major_description', majors.major_description,
               'department', majors.department
           )
       ),
@@ -35,8 +35,7 @@ async function getOtherSchoolCourses(schools) {
     (item) => item?.school_code !== "" && item?.school_code !== null
   );
 
-  if (!is_request_valid)
-    throw { message: "Please provide a correct school name" };
+  if (!is_request_valid) throw { msg: "Please provide a correct school name" };
 
   const schoolsString = schools
     .map(({ school_code }) => `'${school_code}'`)
@@ -160,16 +159,44 @@ async function addSchool({ name, code, address }) {
     [name, code, address]
   );
 }
-async function findSchoolsWithFilter({ q }) {
-  retrieved_data = await db.manyOrNone(`
+
+async function updateSchool({ name, code, address, pre_code }) {
+  if (!validateName(name)) {
+    throw { msg: "Invalid school name", status: 400 };
+  }
+  if (!validateSchoolCode(code)) {
+    throw { msg: "Invalid school code", status: 400 };
+  }
+
+  return await db.query(
+    "UPDATE verified_schools SET name=$1, code=$2, address=$3 WHERE code=$4",
+    [name, code, address, pre_code]
+  );
+}
+async function deleteSchool({ code }) {
+  if (!validateSchoolCode(code)) {
+    throw { msg: "Invalid school code", status: 400 };
+  }
+
+  return await db.query("DELETE FROM verified_schools WHERE code=$1", [code]);
+}
+async function findSchoolsWithFilter({ q, page = 1 }) {
+  const seearch_criteria = `WHERE
+  (code ILIKE '%${q}%')
+  OR
+  (name ILIKE '%${q}%')`;
+  retrieved_data = await db.oneOrNone(`
+  WITH school_data AS
+  (
   SELECT name,
   code,
   address
   FROM verified_schools
-WHERE
-  (code ILIKE '%${q}%')
-  OR
-  (name ILIKE '%${q}%');
+  ${seearch_criteria}
+  LIMIT ${ROWS_PER_PAGE} OFFSET ${(page - 1) * ROWS_PER_PAGE}
+  )
+  SELECT COALESCE((SELECT json_agg(s.* )), '[]')  AS data, (SELECT CEIL(COUNT(*)) FROM verified_schools ${seearch_criteria}) AS total_rows FROM school_data AS s
+  ;
   `);
   return retrieved_data;
 }
@@ -193,8 +220,53 @@ async function addOtherSchoolCourses({
     [course_id, school, name, usm_eqv, credit_hours]
   );
 }
-async function findOtherCoursesWithFilter({ q }) {
-  retrieved_data = await db.manyOrNone(`
+
+async function updateOtherSchoolCourses({
+  course_id,
+  school,
+  name,
+  usm_eqv,
+  credit_hours,
+  pre_course_id,
+  pre_school,
+}) {
+  if (!validateCourseName(name)) {
+    throw { msg: "Invalid Course Name", status: 400 };
+  }
+  if (!validateCourseId(course_id)) {
+    throw { msg: "Invalid course ID", status: 400 };
+  }
+
+  return await db.query(
+    "UPDATE other_school_courses set course_id=$1, school=$2, name=$3, usm_eqv=$4, credit_hours=$5 WHERE (course_id=$6 AND school=$7)",
+    [course_id, school, name, usm_eqv, credit_hours, pre_course_id, pre_school]
+  );
+}
+async function deleteOtherSchoolCourse({ course_id, school }) {
+  if (!validateCourseId(course_id)) {
+    throw { msg: "Invalid course ID", status: 400 };
+  }
+
+  return await db.query(
+    "DELETE FROM other_school_courses WHERE (course_id=$1 AND school=$2)",
+    [course_id, school]
+  );
+}
+
+async function findOtherCoursesWithFilter({ q, page = 1 }) {
+  const seearch_criteria = `
+  WHERE
+  (course_id ILIKE '%${q}%')
+  OR
+  (school ILIKE '%${q}%')
+  OR
+  (name ILIKE '%${q}%')
+  OR
+  (usm_eqv ILIKE '%${q}%')
+  `;
+  retrieved_data = await db.oneOrNone(`
+  WITH course_data AS
+  (
   SELECT
   course_id,
   school,
@@ -204,14 +276,11 @@ async function findOtherCoursesWithFilter({ q }) {
   credit_hours,
   (SELECT name FROM verified_schools WHERE code = oc.school) AS school_name
   FROM other_school_courses oc
-WHERE
-  (course_id ILIKE '%${q}%')
-  OR
-  (school ILIKE '%${q}%')
-  OR
-  (name ILIKE '%${q}%')
-  OR
-  (usm_eqv ILIKE '%${q}%');
+  ${seearch_criteria}
+  LIMIT ${ROWS_PER_PAGE} OFFSET ${(page - 1) * ROWS_PER_PAGE}
+  )
+  SELECT COALESCE((SELECT json_agg(c.* )), '[]')  AS data, (SELECT CEIL(COUNT(*)) FROM other_school_courses ${seearch_criteria}) AS total_rows FROM course_data AS c
+  ;
   `);
 
   return retrieved_data;
@@ -225,4 +294,8 @@ module.exports = {
   findSchoolsWithFilter,
   addOtherSchoolCourses,
   findOtherCoursesWithFilter,
+  updateSchool,
+  deleteSchool,
+  updateOtherSchoolCourses,
+  deleteOtherSchoolCourse,
 };

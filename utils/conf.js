@@ -1,3 +1,5 @@
+const ROWS_PER_PAGE = 2;
+
 const countries = [
   {
     name: "Afghanistan",
@@ -1211,5 +1213,4 @@ const countries = [
     code: "ZW",
   },
 ];
-
-module.exports = { countries };
+module.exports = { countries, ROWS_PER_PAGE };

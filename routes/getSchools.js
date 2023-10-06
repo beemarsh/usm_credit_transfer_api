@@ -8,10 +8,11 @@ const router = express.Router();
 // Register route
 router.post("/", verifyToken, verifyIfUserAdmin, async (req, res, next) => {
   try {
-    const { q } = req.body;
+    const { q ,page} = req.body;
 
     let retrieved = await findSchoolsWithFilter({
-      q
+      q,
+      page
     });
 
     res.status(201).json(retrieved);

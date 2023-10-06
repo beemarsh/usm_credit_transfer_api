@@ -7,6 +7,7 @@ const {
   validatePassword,
   validateRole,
 } = require("../utils/validation");
+const { ROWS_PER_PAGE } = require("../utils/conf");
 
 async function createUser({
   email,
@@ -115,7 +116,6 @@ async function getUserData({ id }) {
 }
 
 async function findUsersWithFilter({ q, page }) {
-  const per_page = 2;
   const searchQuery = `
   WHERE
   (
@@ -143,9 +143,9 @@ async function findUsersWithFilter({ q, page }) {
     (SELECT department_name FROM usm_departments WHERE department_code = u.department) AS department_name
     FROM users u
   ${searchQuery}
-  LIMIT ${per_page} OFFSET ${(page - 1) * per_page}
+  LIMIT ${ROWS_PER_PAGE} OFFSET ${(page - 1) * ROWS_PER_PAGE}
   )
-  SELECT COALESCE((SELECT json_agg(u.* )), '[]')  AS data, CEIL(CEIL(COUNT(*) / ${per_page}) + CEIL(COUNT(*) % ${per_page})) AS total, (SELECT CEIL(COUNT(*)) FROM users ${searchQuery}) AS total_rows FROM user_data AS u
+  SELECT COALESCE((SELECT json_agg(u.* )), '[]')  AS data, CEIL(CEIL(COUNT(*) / ${ROWS_PER_PAGE}) + CEIL(COUNT(*) % ${ROWS_PER_PAGE})) AS total, (SELECT CEIL(COUNT(*)) FROM users ${searchQuery}) AS total_rows FROM user_data AS u
   
   ;
   `);

@@ -1,21 +1,20 @@
 const express = require("express");
 const verifyToken = require("../utils/verifyToken");
 const verifyIfUserAdmin = require("../utils/verifyAdmin");
-const { findDepartmentsWithFilter } = require("../models/USM");
+const { deleteUSMCourse } = require("../models/USM");
 
 const router = express.Router();
 
 // Register route
-router.post("/", verifyToken, verifyIfUserAdmin, async (req, res, next) => {
+router.delete("/", verifyToken, verifyIfUserAdmin, async (req, res, next) => {
   try {
-    const { q, page } = req.body;
+    const { course_id } = req.body;
 
-    let retrieved = await findDepartmentsWithFilter({
-      q,
-      page,
+    await deleteUSMCourse({
+      course_id,
     });
 
-    res.status(201).json(retrieved);
+    res.status(201).json({ message: "Course deleted successfully" });
   } catch (error) {
     next(error);
   }
