@@ -47,7 +47,7 @@ async function deleteDepartment({ department_code }) {
   );
 }
 
-async function findDepartmentsWithFilter({ q = "", page = 1 }) {
+async function findDepartmentsWithFilter({ q = "", page = 1, all = false }) {
   const searchQuery = `
   WHERE
     (department_code ILIKE '%${q}%')
@@ -61,7 +61,7 @@ async function findDepartmentsWithFilter({ q = "", page = 1 }) {
     department_name
     FROM usm_departments
     ${searchQuery}
-    LIMIT ${ROWS_PER_PAGE} OFFSET ${(page - 1) * ROWS_PER_PAGE}
+    ${all ? "" : `LIMIT ${ROWS_PER_PAGE} OFFSET ${(page - 1) * ROWS_PER_PAGE}`}
     )
     SELECT COALESCE((SELECT json_agg(d.* )), '[]')  AS data, (SELECT CEIL(COUNT(*)) FROM usm_departments ${searchQuery}) AS total_rows FROM department_data AS d
     ;

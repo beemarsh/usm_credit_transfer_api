@@ -146,6 +146,111 @@ async function addStudentToDB(student_data, img, uid) {
   return await db.manyOrNone(query);
 }
 
+async function updateStudentCourseVerifiedStatus({
+  student_id,
+  course_id,
+  school,
+  status,
+}) {
+  return await db.query(`
+  UPDATE student_course_relation SET is_verified=${!!status} WHERE student_id='${student_id}' AND course_id='${course_id}' AND school='${school}'
+  `);
+}
+
+async function findStudentsWithFilter({ q, page = 1, verified = false }) {
+  const seearch_criteria = `WHERE
+  (
+  (student_id ILIKE '%${q}%')
+  OR
+  (first_name ILIKE '%${q}%')
+  OR
+  (last_name ILIKE '%${q}%')
+  )
+  AND
+  (all_courses_verified=${!!verified})
+  `;
+
+  const get_usm_eqv = `(SELECT usm_eqv from other_school_courses WHERE course_id=scr.course_id AND school=scr.school)`;
+
+  retrieved_data = await db.oneOrNone(`
+  WITH student_data AS
+  (
+  SELECT student_id,
+  major,
+  transfer_date,
+  graduation_year,
+  created_at,
+  all_courses_verified as total_verified,
+  CONCAT(first_name,' ',last_name) as name,
+  latest_updated_date as last_updated,
+  (SELECT CONCAT(u.first_name, ' ', u.last_name) FROM users u WHERE id = std.created_by) AS created_by,
+  (SELECT CONCAT(u.first_name, ' ', u.last_name) FROM users u WHERE id = std.latest_updated_by) AS updated_by,
+  (SELECT json_agg(json_build_object(
+        'course_id', scr.course_id,
+        'verified', scr.is_verified,
+        'course_name', (SELECT name from other_school_courses WHERE course_id=scr.course_id AND school=scr.school),
+        'school', scr.school,
+        'school_name', (SELECT name from verified_schools WHERE code=scr.school),
+        'usm_eqv', ${get_usm_eqv},
+        'usm_eqv_course_name', (SELECT course_name FROM usm_courses WHERE course_id = ${get_usm_eqv})
+    ))
+    FROM student_course_relation scr
+    WHERE scr.student_id = std.student_id
+  ) AS courses_taken
+  FROM student std
+  ${seearch_criteria}
+  LIMIT ${ROWS_PER_PAGE} OFFSET ${(page - 1) * ROWS_PER_PAGE}
+  )
+  SELECT COALESCE((SELECT json_agg(s.* )), '[]')  AS data, (SELECT CEIL(COUNT(*)) FROM student ${seearch_criteria}) AS total_rows FROM student_data AS s
+  ;
+  `);
+  return retrieved_data;
+}
+
+async function markSelectedCourse({ student_id, status, courses }) {
+  let arrayed_query = ``;
+  courses?.map(({ course_id, school }, i) => {
+    arrayed_query += `('${school}', '${course_id}', '${student_id}')${
+      i < courses?.length - 1 ? `,` : ``
+    }`;
+  });
+
+  await db.query(`
+  UPDATE student_course_relation
+SET is_verified = ${status}
+WHERE (school, course_id, student_id) IN (
+    ${arrayed_query}
+);
+  `);
+}
+
+async function markAllCourses({ student_id, status =true}) {
+  await db.query(`
+  UPDATE student_course_relation
+SET is_verified=${status}
+WHERE student_id='${student_id}';
+UPDATE student
+SET all_courses_verified = ${status}
+WHERE student_id='${student_id}';
+  `);
+}
+
+async function deleteMarkedCourses({ student_id, courses }) {
+  let arrayed_query = ``;
+  courses?.map(({ course_id, school }, i) => {
+    arrayed_query += `('${school}', '${course_id}', '${student_id}')${
+      i < courses?.length - 1 ? `,` : ``
+    }`;
+  });
+
+  await db.query(`
+  DELETE FROM student_course_relation
+WHERE (school, course_id, student_id) IN (
+    ${arrayed_query}
+);
+  `);
+}
+
 async function addSchool({ name, code, address }) {
   if (!validateName(name)) {
     throw { msg: "Invalid school name", status: 400 };
@@ -180,6 +285,7 @@ async function deleteSchool({ code }) {
 
   return await db.query("DELETE FROM verified_schools WHERE code=$1", [code]);
 }
+
 async function findSchoolsWithFilter({ q, page = 1 }) {
   const seearch_criteria = `WHERE
   (code ILIKE '%${q}%')
@@ -288,6 +394,11 @@ async function findOtherCoursesWithFilter({ q, page = 1 }) {
 
 module.exports = {
   getInitialPropsToAddStudent,
+  updateStudentCourseVerifiedStatus,
+  markSelectedCourse,
+  deleteMarkedCourses,
+  markAllCourses,
+  findStudentsWithFilter,
   getOtherSchoolCourses,
   addStudentToDB,
   addSchool,
