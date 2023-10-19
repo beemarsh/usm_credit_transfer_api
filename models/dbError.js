@@ -2,6 +2,11 @@ function getDBErrMsg(error) {
   let err_msg = error?.msg;
   if (error?.message?.includes("student_student_id_key"))
     err_msg = "The student already exists";
+  if (
+    error?.message?.includes("student_pkey") &&
+    error?.detail.includes("already exists")
+  )
+    err_msg = "The student already exists";
   if (error?.message?.includes("JSON")) err_msg = "Please format your data";
   if (error?.message?.includes("student_major_fkey"))
     err_msg = "The provided major doesn't exist or is invalid.";

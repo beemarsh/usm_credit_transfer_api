@@ -76,7 +76,7 @@ async function addStudentToDB(student_data, img, uid) {
     last_name,
     id,
     country,
-    phone_number,
+    email,
     major,
     transfer_date,
     graduation_date,
@@ -106,11 +106,11 @@ async function addStudentToDB(student_data, img, uid) {
   });
 
   const query = `-- Insert data into the student table and capture the generated student_id
-  INSERT INTO student (student_id, country, phone, major, transfer_date, graduation_year, image, first_name, last_name, latest_updated_by, created_by)
+  INSERT INTO student (student_id, country, email, major, transfer_date, graduation_year, image, first_name, last_name, latest_updated_by, created_by)
   VALUES (
     '${id}',
     '${country}',
-    '${phone_number}',
+    '${email}',
     '${major}',
     '${transfer_date}',
     '${graduation_date}',
@@ -143,7 +143,14 @@ async function addStudentToDB(student_data, img, uid) {
     ) AS courses;
 `;
 
-  return await db.manyOrNone(query);
+  return await db.query(query);
+}
+async function deleteStudent({ student_id }) {
+  await db.query(`
+  DELETE FROM student_course_relation WHERE student_id = '${student_id}';
+  DELETE FROM school_student_relation WHERE student_id = '${student_id}';
+DELETE FROM student where student_id='${student_id}'
+  `);
 }
 
 async function updateStudentCourseVerifiedStatus({
@@ -207,6 +214,42 @@ async function findStudentsWithFilter({ q, page = 1, verified = false }) {
   return retrieved_data;
 }
 
+async function findAllStudentCourses({ student_id }) {
+  const seearch_criteria = `WHERE
+  student_id='${student_id}'
+  `;
+
+  const get_usm_eqv = `(SELECT usm_eqv from other_school_courses WHERE course_id=scr.course_id AND school=scr.school)`;
+
+  retrieved_data = await db.oneOrNone(`
+  SELECT student_id,
+  major,
+  transfer_date,
+  graduation_year,
+  created_at,
+  all_courses_verified as total_verified,
+  CONCAT(first_name,' ',last_name) as name,
+  latest_updated_date as last_updated,
+  (SELECT CONCAT(u.first_name, ' ', u.last_name) FROM users u WHERE id = std.created_by) AS created_by,
+  (SELECT CONCAT(u.first_name, ' ', u.last_name) FROM users u WHERE id = std.latest_updated_by) AS updated_by,
+  (SELECT json_agg(json_build_object(
+        'course_id', scr.course_id,
+        'verified', scr.is_verified,
+        'course_name', (SELECT name from other_school_courses WHERE course_id=scr.course_id AND school=scr.school),
+        'school', scr.school,
+        'school_name', (SELECT name from verified_schools WHERE code=scr.school),
+        'usm_eqv', ${get_usm_eqv},
+        'usm_eqv_course_name', (SELECT course_name FROM usm_courses WHERE course_id = ${get_usm_eqv})
+    ))
+    FROM student_course_relation scr
+    WHERE scr.student_id = std.student_id
+  ) AS courses_taken
+  FROM student std
+  ${seearch_criteria};
+  `);
+  return retrieved_data;
+}
+
 async function markSelectedCourse({ student_id, status, courses }) {
   let arrayed_query = ``;
   courses?.map(({ course_id, school }, i) => {
@@ -224,7 +267,7 @@ WHERE (school, course_id, student_id) IN (
   `);
 }
 
-async function markAllCourses({ student_id, status =true}) {
+async function markAllCourses({ student_id, status = true }) {
   await db.query(`
   UPDATE student_course_relation
 SET is_verified=${status}
@@ -399,6 +442,7 @@ module.exports = {
   deleteMarkedCourses,
   markAllCourses,
   findStudentsWithFilter,
+  findAllStudentCourses,
   getOtherSchoolCourses,
   addStudentToDB,
   addSchool,
@@ -409,4 +453,5 @@ module.exports = {
   deleteSchool,
   updateOtherSchoolCourses,
   deleteOtherSchoolCourse,
+  deleteStudent,
 };

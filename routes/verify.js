@@ -26,13 +26,7 @@ router.post("/", verifyToken, async (req, res, next) => {
   }
 });
 
-const keysToCopy = [
-  "profile_picture",
-  "role",
-  "department",
-  "first_name",
-  "last_name",
-];
+const keysToCopy = ["is_admin", "department", "first_name", "last_name"];
 const getUserFormattedData = (user) => {
   try {
     const formatted_user_data = Object.fromEntries(

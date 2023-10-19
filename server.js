@@ -60,6 +60,7 @@ app.use((error, req, res, next) => {
       .json({ message: "Please format your data" });
   } else {
     const db_err = getDBErrMsg(error);
+    console.log(db_err);
     res.status(error?.status ? error?.status : 400).json({
       message: db_err ? db_err : "Sorry! Couldn't process your request",
     });

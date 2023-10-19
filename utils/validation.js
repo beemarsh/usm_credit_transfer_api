@@ -28,22 +28,22 @@ function validatePassword(password) {
 }
 
 function validateName(f_name) {
-  const pattern = /^[A-Za-z\s]+$/;
+  const pattern = /^[\s\S]+$/;
   return pattern.test(f_name) && f_name?.length >= 2;
 }
 
 function validateSchoolCode(code) {
-  const pattern = /^[A-Za-z]+$/;
+  const pattern = /^[\s\S]+$/;
   return pattern.test(code) && code?.length >= 3;
 }
 
 function validateCourseName(name) {
-  const pattern = /^[\w\s]+$/;
+  const pattern = /^[\s\S]+$/;
   return pattern.test(name) && name?.length >= 2;
 }
 
 function validateCourseId(id) {
-  const pattern = /^[A-Za-z0-9]+$/;
+  const pattern = /^[\s\S]+$/;
   return pattern.test(id) && id?.length >= 3;
 }
 

@@ -1,4 +1,4 @@
-const ROWS_PER_PAGE = 2;
+const ROWS_PER_PAGE = 10;
 
 const countries = [
   {

@@ -8,7 +8,6 @@ const multer = require("multer");
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
 const { addStudentToDB } = require("../models/OtherSchools");
-const getDBErrMsg = require("../models/dbError");
 
 router.post(
   "/",
@@ -43,7 +42,7 @@ router.post(
       //   last_name: "",
       //   id: "",
       //   country: "",
-      //   phone_number: "",
+      //   email: "",
       //   major: "",
       //   transfer_date: "",
       //   graduation_date: "",
@@ -74,39 +73,39 @@ const {
   isUsmIDValid,
   isValidCountry,
   isValidISODate,
-  isValidPhoneNumber,
+  validateEmail,
 } = require("../utils/validation");
 
 function validateAddStudentRequest(data) {
   // Check if first_name is valid
   if (!validateName(data?.first_name)) {
-    throw { msg: "Invalid first name" };
+    throw { msg: "Invalid first name", status: 400 };
   }
 
   // Check if last_name is valid
   if (!validateName(data?.last_name)) {
-    throw { msg: "Invalid last name" };
+    throw { msg: "Invalid last name", status: 400 };
   }
 
   // Check if usmid is valid
   if (!isUsmIDValid(data?.id)) {
-    throw { msg: "Invalid USM ID" };
+    throw { msg: "Invalid USM ID", status: 400 };
   }
 
   if (!isValidCountry(data?.country)) {
-    throw { msg: "Invalid country code" };
+    throw { msg: "Invalid country code", status: 400 };
   }
 
   // Check if phone_number is valid
-  if (!isValidPhoneNumber(data?.phone_number)) {
-    throw { msg: "Invalid phone number" };
+  if (!validateEmail(data?.email)) {
+    throw { msg: "Invalid email address", status: 400 };
   }
 
   if (
     !isValidISODate(data?.transfer_date) ||
     !isValidISODate(data?.graduation_date)
   ) {
-    throw { msg: "Invalid date format" };
+    throw { msg: "Invalid date format", status: 400 };
   }
 
   //We also need to check major, schools and courses; However, they are foreign keys so they neednot be checked because they will be automatically detected if the FK doesnt exist
