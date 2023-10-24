@@ -38,7 +38,7 @@ app.use(cors(corsOptions));
 // Routes
 const apiRoutes = require("./routes/index");
 const getDBErrMsg = require("./models/dbError");
-app.use("/", apiRoutes);
+app.use("/api", apiRoutes);
 
 // Middleware to handle errors
 app.use((error, req, res, next) => {
