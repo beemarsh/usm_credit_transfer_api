@@ -2,15 +2,13 @@ const express = require("express");
 const session = require("express-session");
 const bodyParser = require("body-parser");
 const dotenv = require("dotenv");
-const path = require("path");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
-const https = require("https");
-const fs = require("fs");
 const http = require("http");
 
 dotenv.config(); // Load environment variables from .env file
 const SECRET_KEY = process.env.SECRET_KEY;
+const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS.split("");
 
 const app = express();
 const port = process.env.PORT;
@@ -29,12 +27,7 @@ app.use(
 app.use(bodyParser.json());
 
 const corsOptions = {
-  origin: [
-    "https://localhost:3000",
-    "https://127.0.0.1:3000",
-    "https://app.localhost.com:3000",
-    "http://app.localhost.com:3000",
-  ],
+  origin: ALLOWED_ORIGINS,
   methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
   credentials: true, // Enable credentials (e.g., cookies, authentication headers)
   preflightContinue: true,
@@ -81,14 +74,3 @@ httpServer.listen(port, () => {
     `Express server is running on HTTP at http://api.localhost.com:${port}`
   );
 });
-
-// const options = {
-//   key: fs.readFileSync(__dirname + "/api.localhost.com-key.pem"), // Path to your private key
-//   cert: fs.readFileSync(__dirname + "/api.localhost.com.pem"), // Path to your certificate
-// };
-// const httpsServer = https.createServer(options, app);
-// httpsServer.listen(port, () => {
-//   console.log(
-//     `Express server is running on HTTPS at https://api.localhost.com:${port}`
-//   );
-// });
